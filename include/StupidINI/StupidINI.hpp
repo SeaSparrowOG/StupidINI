@@ -12,7 +12,7 @@ namespace StupidINI
     class INI
     {
     public:
-        friend std::expected<INI, ParseError> load_ini(std::string_view);
+        friend std::expected<INI, ParseError> load_ini(std::string_view path) noexcept;
 
         /// @brief Default constructor. Cannot be actually used to load existing INI files, use `load_ini` for that purpose.
         INI() = default;
@@ -30,13 +30,15 @@ namespace StupidINI
         /// @param value The value to insert. 
         template <typename T> requires is_setting<T>
         void SetValue(const std::string& setting, const std::string& section, const T& value) {
-
+            static_assert(always_false<T>, "SetValue is not implemented yet.");
         }
 
         /// @brief Saves this INI file. If there is an already existing INI file, it is COMPLETELY overwritten.
         /// @return `std::nullopt` in case the file was saved normally, otherwise a `SaveError` indicating why the save failed.
+        template <typename T>
         [[nodiscard]]
         std::optional<SaveError> Save() const noexcept {
+            static_assert(always_false<T>, "Save is not implemented yet.");
             return std::nullopt;
         }
 
@@ -59,13 +61,14 @@ namespace StupidINI
             else if (ec == std::errc::result_out_of_range) {
                 return std::unexpected(FetchError::NumberOutOfRange);
             }
-            else if (ptr != str.data() + str.size()) {
+            else if (res != str.data() + str.size()) {
                 return std::unexpected(FetchError::NotANumber);
             }
             return out;
         }
 
         Style                 _style{};
+        INI_DATA              _data{};
         std::filesystem::path _path = "";
     };
 
@@ -85,7 +88,13 @@ namespace StupidINI
             return std::unexpected(createdStream.error());
         }
 
+        auto parsedData = detail::create_data(createdStream.value());
+        if (!parsedData) {
+            return std::unexpected(parsedData.error());
+        }
+
         INI ini(createdPath.value());
+        ini._data = std::move(parsedData.value());
         return ini;
     }
 }

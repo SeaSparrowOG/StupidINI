@@ -48,7 +48,7 @@ namespace StupidINI
 
             const auto ext = path.substr(pathSize - expected_extension_size, std::string::npos);
             const bool is_ini = ext.size() == expected_extension_size &&
-                std::equal(ext.begin(), ext.end(), expected_extension,
+                std::equal(ext.begin(), ext.end(), expected_extension.begin(), expected_extension.end(),
                     [](unsigned char a, unsigned char b) {
                         return std::tolower(a) == b;
                 });
@@ -80,6 +80,34 @@ namespace StupidINI
             catch (std::filesystem::filesystem_error& e) {
                 return std::unexpected(ParseError::FilesystemError);
             }
+        }
+
+        struct ReadData
+        {
+
+        };
+
+        [[nodiscard]]
+        inline std::optional<ParseError> parse_line(ReadData& data, std::string& line) {
+            return std::nullopt;
+        }
+
+        [[nodiscard]]
+        inline std::expected<INI_DATA, ParseError> create_data(std::ifstream& stream) noexcept
+        {
+            static constexpr size_t max_line_size = 512u;
+            INI_DATA data{};
+            ReadData read{};
+            std::optional<ParseError> parseResult = std::nullopt;
+            std::string line{}; line.reserve(max_line_size);
+            
+            while (std::getline(stream, line)) {
+                parseResult = parse_line(read, line);
+                if (parseResult.has_value()) {
+                    return std::unexpected(parseResult.value());
+                }
+            }
+            return data;
         }
     }
 }

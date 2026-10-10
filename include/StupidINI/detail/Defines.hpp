@@ -34,6 +34,9 @@ namespace StupidINI
     template <typename T>
     concept is_setting =
         is_bool<T> || is_text<T> || is_numerical<T>;
+
+    template <class T>
+    inline constexpr bool always_false = false;
         
     struct StringHash {
         using is_transparent = void;
@@ -57,7 +60,7 @@ namespace StupidINI
 
     template <typename T>
     using StringMap = std::unordered_map<std::string, T, StringHash, StringEqual>;
-    using Section = StringMap<std::vector<std::string>>;
+    using INI_DATA = StringMap<std::vector<std::string>>;
 
     inline static constexpr const char assignChr = '=';
     inline static constexpr const char commentChr = ';';
