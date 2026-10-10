@@ -25,9 +25,15 @@ namespace StupidINI
 
         template <typename T> requires is_setting<T>
         [[nodiscard]]
-        std::expected<T, FetchError> GetValue(const std::string& setting, const std::string& section) const noexcept
+        std::expected<T, FetchError> GetValue(std::string_view setting, std::string_view section = "") const noexcept
         {
-#ifndef STUPIDINI_NO_CACHE
+
+#ifndef STUPIDINI_CASE_SENSITIVE
+            std::ranges::transform(setting, [](unsigned char chr) { return std::tolower(chr); });
+            std::ranges::transform(section, [](unsigned char chr) { return std::tolower(chr); });
+#endif
+
+#ifdef STUPIDINI_CACHE
             static StringMap<T> cache{};
             std::string_view compoundName = setting + "|" + section;
             const auto cached = cache.find(compoundName);
@@ -48,7 +54,7 @@ namespace StupidINI
             if (!res) {
                 return std::unexpected(res.error());
             }
-#ifndef STUPIDINI_NO_CACHE
+#ifdef STUPIDINI_CACHE
             cache.emplace(compoundName, res.value());
 #endif
             return res.value();
