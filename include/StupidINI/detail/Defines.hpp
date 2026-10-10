@@ -15,7 +15,6 @@
 #include <unordered_set>
 #include <utility>
 
-#include <fmt/format.h>
 
 namespace StupidINI
 {
@@ -166,6 +165,8 @@ namespace StupidINI
     }
 }
 
+#ifdef SUPPORT_FMT
+#include <fmt/format.h>
 template<>
 struct fmt::formatter<StupidINI::FetchError> : fmt::formatter<std::string_view> {
     auto format(StupidINI::FetchError error, fmt::format_context& ctx) const {
@@ -192,3 +193,4 @@ struct fmt::formatter<StupidINI::SaveError> : fmt::formatter<std::string_view> {
         );
     }
 };
+#endif
