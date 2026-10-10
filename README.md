@@ -39,3 +39,6 @@ In order to retrieve a value from an `INI`, you will need to use the `GetValue` 
 If the setting is missing, you will get back an `std::nullopt`. If the setting *cannot* be cast to the provided value, you will get back an error.
 
 The API is non-throwing, but uses `std::expected` and `std::optional` to enforce compile-time checks where needed. You should not (and cannot) construct an INI object directly or edit its contents. 
+
+## Credits
+Template shamelessly stolen from [powerofthree](https://github.com/powerof3) (MIT).
