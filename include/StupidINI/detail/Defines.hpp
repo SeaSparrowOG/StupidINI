@@ -131,7 +131,7 @@ namespace StupidINI
         SectionNotFound,   // Provided section is not in the ini
         SettingNotFound,   // Provided setting is not in the ini, in the given section
         NotANumber,        // Provided setting was not a number
-        NumberOutOfRangev, // Provided setting was a number, but was out of bounds for the requested type
+        NumberOutOfRange, // Provided setting was a number, but was out of bounds for the requested type
         NotABoolean        // Provided setting was not a boolean
     };
 
@@ -141,7 +141,7 @@ namespace StupidINI
         case FetchError::SectionNotFound: return "SectionNotFound";
         case FetchError::SettingNotFound: return "SettingNotFound";
         case FetchError::NotANumber: return "NotANumber";
-        case FetchError::NumberOutOfRangev: return "NumberOutOfRangev";
+        case FetchError::NumberOutOfRange: return "NumberOutOfRange";
         case FetchError::NotABoolean: return "NotABoolean";
         default: std::unreachable();
         }
