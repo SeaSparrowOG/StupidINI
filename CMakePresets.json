@@ -1,0 +1,23 @@
+{
+ "version": 3,
+ "cmakeMinimumRequired": {
+  "major": 3,
+  "minor": 24,
+  "patch": 0
+ },
+ "configurePresets": [
+  {
+   "name": "base",
+   "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+   "generator": "Visual Studio 18 2026",
+   "cacheVariables": {
+    "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded$<$<CONFIG:Debug>:Debug>",
+    "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+    "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /external:anglebrackets /external:W0 $penv{CXXFLAGS}",
+    "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/ports",
+    "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+    "CMAKE_BUILD_TYPE": "Release"
+   }
+  }
+ ]
+}
