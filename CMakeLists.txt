@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(
-	StupidINI
-	VERSION 1.0.0
-	LANGUAGES CXX
+    StupidINI
+    VERSION 1.0.0
+    LANGUAGES CXX
 )
 
 # ---- Include guards ----
@@ -13,6 +13,13 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 		FATAL_ERROR
 			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
 )
+endif()
+
+# ---- Options ----
+if (STUPIDINI_SKIPTESTS)
+	option(STUPIDINI_BUILD_TESTS "Build StupidINI tests" OFF)
+else()
+	option(STUPIDINI_BUILD_TESTS "Build StupidINI tests" ON)
 endif()
 
 # ---- Add source files ----
@@ -84,3 +91,22 @@ install(
 	NAMESPACE ${PROJECT_NAME}::
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
+
+# ---- Tests ----
+
+if(STUPIDINI_BUILD_TESTS)
+    include(CTest)
+
+    add_executable(StupidINI_tests
+        tests/test_main.cpp
+    )
+
+    target_link_libraries(StupidINI_tests
+        PRIVATE StupidINI::StupidINI
+    )
+
+    add_test(
+        NAME StupidINI_tests
+        COMMAND StupidINI_tests
+    )
+endif()

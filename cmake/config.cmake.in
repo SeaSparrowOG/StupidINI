@@ -1,2 +1,7 @@
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@-targets.cmake")
 include(CMakeFindDependencyMacro)
+
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/StupidINI-targets.cmake")
+check_required_components(StupidINI)
