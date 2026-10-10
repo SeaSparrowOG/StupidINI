@@ -3,143 +3,76 @@
 #include "detail/ParseUtils.hpp"
 
 namespace StupidINI
-{
-    template <typename T>
-    concept is_bool =
-        std::is_same_v<T, bool>;
+{    
+    struct Style
+    {
+    };
 
-    template <typename T>
-    concept is_numerical = 
-        (std::is_integral_v<T> || std::is_floating_point_v<T>) &&
-        !is_bool<T>;
-    
-    template <typename T>
-    concept is_text =
-        std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>;
-
-    template <typename T>
-    concept is_setting =
-        is_bool<T> || is_text<T> || is_numerical<T>;
-    
     /// @brief A representation of an INI file. Use `GetSetting` to access its members.
     class INI
     {
     public:
         friend std::expected<INI, ParseError> load_ini(std::string_view);
 
-        /// @brief Returns the raw value of of setting `setting` in section `section`.
-        /// @param setting The name of the setting.
-        /// @param section The name of the section `setting` is in.
-        /// @return The value of `setting`, otherwise the reason it didn't work.
-        [[nodiscard]]
-        std::expected<std::string, FailureReason> GetSetting(const std::string_view setting,
-                                                                const std::string_view section) const noexcept 
-        {
-            const auto& foundSection = _settings.find(section);
-            if (foundSection == _settings.end()) {
-                return std::unexpected(FailureReason::SectionNotFound);
-            }
-
-            const auto& map = foundSection->second;
-            const auto& foundSetting = map.find(setting);
-            if (foundSetting == map.end()) {
-                return std::unexpected(FailureReason::SettingNotFound);
-            }
-            return foundSetting->second;
-        }
-        
-        /// @brief Returns the value of setting `setting` in section `section` cast as T.
-        /// @tparam T The type to cast T as. Must be either integral or decimal.
-        /// @param setting The name of the setting.
-        /// @param section The section the setting is found in.
-        /// @return On success, the value of `setting` as `T`. Otherwise, the reason it didn't work.
-        template <typename T> requires is_setting<T>
-        [[nodiscard]]
-        std::expected<T, FailureReason> GetSetting(const std::string_view setting,
-                                                                const std::string_view section) const noexcept 
-        {
-            const auto found = GetSetting(setting, section);
-            if (!found) {
-                return std::unexpected(found.error());
-            }
-
-            const auto& val = found.value();
-            if constexpr (is_text<T>) {
-                return static_cast<T>(val);
-            }
-
-            if constexpr (is_bool<T>) {
-                std::string str;
-                str.resize(val.size());
-
-                std::transform(val.begin(), val.end(), str.begin(),
-                    [](unsigned char chr) {
-                        return static_cast<char>(std::tolower(chr));
-                    });
-
-                if (std::ranges::contains(truthy, str)) {
-                    return true;
-                }
-                if (std::ranges::contains(falsy, str)) {
-                    return false;
-                }
-                return std::unexpected(FailureReason::NotABoolean);
-            }
-            return As<T>(val);
-        }
-
-        /// @brief Returns the raw value of a setting either not under a section or under the `[]` section.
-        /// @param setting The name of the setting.
-        /// @return The value of `setting`, otherwise the reason it didn't work.
-        [[nodiscard]]
-        std::expected<std::string, FailureReason> GetSetting(const std::string_view setting) const noexcept 
-        {
-            return GetSetting(setting, "");
-        }
-        
-        /// @brief Returns the value of a setting either not under a section or under the `[]` section cast as T.
-        /// @tparam T The type to cast T as. Must be either integral or decimal.
-        /// @param setting The name of the setting.
-        /// @return On success, the value of `setting` as `T`. Otherwise, the reason it didn't work.
-        template <typename T> requires is_setting<T>
-        [[nodiscard]]
-        std::expected<T, FailureReason> GetSetting(const std::string_view setting) const noexcept 
-        {
-            return GetSetting<T>(setting, "");
-        }
-
-    private:
+        /// @brief Default constructor. Cannot be actually used to load existing INI files, use `load_ini` for that purpose.
         INI() = default;
-        Settings _settings;
 
-        inline static constexpr const std::array<std::string_view, 2> truthy = {
-            "1", "true"
-        };
-        inline static constexpr const std::array<std::string_view, 2> falsy = {
-            "0", "false"
-        };
+        /// @brief This constructor allows you to specify a style. When saving, the resulting INI will be saved in this format.
+        /// @param style 
+        INI(const Style& style) :
+            _style(style)
+        {}
+
+        /// @brief Sets a specific setting in a specific section to this value. If the setting OR section don't exist, they are created.
+        /// @tparam T For convenience. Must be either a decimal, integral, boolean, or text.
+        /// @param setting The setting. If it doesn't exist in the given section, it is created. If it already exists, it is overwritten.
+        /// @param section The section. If it doesn't exist, it is created.
+        /// @param value The value to insert. 
+        template <typename T> requires is_setting<T>
+        void SetValue(const std::string& setting, const std::string& section, const T& value) {
+
+        }
+
+        /// @brief Saves this INI file. If there is an already existing INI file, it is COMPLETELY overwritten.
+        /// @return `std::nullopt` in case the file was saved normally, otherwise a `SaveError` indicating why the save failed.
+        [[nodiscard]]
+        std::optional<SaveError> Save() const noexcept {
+            return std::nullopt;
+        }
+
+        void SetStyle(const Style& style) noexcept {
+            _style = style;
+        }
+    private:
+        INI(const std::filesystem::path& path) :
+            _path(path)
+        {}
 
         template <typename T> requires is_numerical<T>
-        static std::expected<T, FailureReason> As(const std::string_view str) noexcept
+        static std::expected<T, FetchError> As(const std::string_view str) noexcept
         {
             T out;
             auto [res, ec] = std::from_chars(str.data(), str.data() + str.size(), out);
             if (ec == std::errc::invalid_argument) {
-                return std::unexpected(FailureReason::NotANumber);
+                return std::unexpected(FetchError::NotANumber);
             }
             else if (ec == std::errc::result_out_of_range) {
-                return std::unexpected(FailureReason::NumberOutOfRange);
+                return std::unexpected(FetchError::NumberOutOfRange);
             }
             else if (ptr != str.data() + str.size()) {
-                return std::unexpected(FailureReason::NotANumber);
+                return std::unexpected(FetchError::NotANumber);
             }
             return out;
         }
+
+        Style                 _style{};
+        std::filesystem::path _path = "";
     };
 
     /// @brief Use this function to construct an INI object. Any ini retrieved is valid. I recommend marking it "const".
     /// @param path The path to the ini file. It can be relative, absolute, or network.
     /// @return An INI object if it is successful, an error otherwise. Use StupidINI::to_string to print the error.
+    [[nodiscard]]
     inline std::expected<INI, ParseError> load_ini(std::string_view path) noexcept
     {
         const auto createdPath = detail::create_path(path);
@@ -152,15 +85,7 @@ namespace StupidINI
             return std::unexpected(createdStream.error());
         }
 
-        auto createdData = detail::load_ini_data(createdStream.value());
-        if (!createdData) {
-            return std::unexpected(createdData.error());
-        }
-
-        auto& data = createdData.value();
-        INI ini;
-        ini._settings = std::move(data);
-
+        INI ini(createdPath.value());
         return ini;
     }
 }
