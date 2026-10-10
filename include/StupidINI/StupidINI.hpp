@@ -23,6 +23,37 @@ namespace StupidINI
             _style(style)
         {}
 
+        template <typename T> requires is_setting<T>
+        [[nodiscard]]
+        std::expected<T, FetchError> GetValue(const std::string& setting, const std::string& section) const noexcept
+        {
+#ifndef STUPIDINI_NO_CACHE
+            static StringMap<T> cache{};
+            std::string_view compoundName = setting + "|" + section;
+            const auto cached = cache.find(compoundName);
+            if (cached != cache.end()) {
+                return cached->second;
+            }
+#endif
+            const auto foundSection = _data.find(section);
+            if (foundSection == _data.end()) {
+                return std::unexpected(FetchError::SectionNotFound);
+            }
+
+            const auto foundSetting = std::ranges::find(foundSection->second, setting);
+            if (foundSetting == foundSection->second.end()) {
+                return std::unexpected(FetchError::SectionNotFound);
+            }
+            auto res = As<T>(*foundSetting);
+            if (!res) {
+                return std::unexpected(res.error());
+            }
+#ifndef STUPIDINI_NO_CACHE
+            cache.emplace(compoundName, res.value());
+#endif
+            return res.value();
+        }
+
         /// @brief Sets a specific setting in a specific section to this value. If the setting OR section don't exist, they are created.
         /// @tparam T For convenience. Must be either a decimal, integral, boolean, or text.
         /// @param setting The setting. If it doesn't exist in the given section, it is created. If it already exists, it is overwritten.
@@ -51,7 +82,8 @@ namespace StupidINI
         {}
 
         template <typename T> requires is_numerical<T>
-        static std::expected<T, FetchError> As(const std::string_view str) noexcept
+        [[nodiscard]]
+        static inline std::expected<T, FetchError> As(const std::string_view str) noexcept
         {
             T out;
             auto [res, ec] = std::from_chars(str.data(), str.data() + str.size(), out);
