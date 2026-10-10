@@ -11,15 +11,14 @@ Quickstart:
 int main() {
     auto parseResult = StupidINI::load_ini("Path/To/INI/file.ini");
     if (!parseResult.has_value()) {
-        std::cout << "Something went wrong: " << Stupid_INI::to_string(parseResult.error()) << "\n";
+        std::cout << "Failed to parse existing INI with error: " << parseResult.error() << "\n";
         return 1;
     }
 
     const auto ini = parseResult.value();
-
     const auto retrieved = ini.GetValue<size_t>("SomeSetting", "SomeSection");
     if (!retrieved.has_value()) {
-        std::cout << "Failed to retrieve a setting because: " << Stupid_INI::to_string(retrieved.error()) << "\n";
+        std::cout << "Failed to retrieve a setting with error: " << retrieved.error() << "\n";
         return 1;
     }
 
@@ -34,11 +33,11 @@ In order to retrieve a value from an `INI`, you will need to use the `GetValue` 
 - String
 - Integral
 - Float
-- `bool`
+- Bool
 
 If the setting is missing, you will get back an `std::nullopt`. If the setting *cannot* be cast to the provided value, you will get back an error.
 
-The API is non-throwing, but uses `std::expected` and `std::optional` to enforce compile-time checks where needed. You should not (and cannot) construct an INI object directly or edit its contents. 
+The API is non-throwing, but uses `std::expected` and `std::optional` to enforce compile-time checks where needed.
 
 ## Credits
 Template shamelessly stolen from [powerofthree](https://github.com/powerof3) (MIT).
